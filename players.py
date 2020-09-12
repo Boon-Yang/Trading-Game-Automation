@@ -2,18 +2,20 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import random
+from utils import *
 
 # player includes market makers and speculator
 class Player:
-    suits = ['S', 'H', 'C', 'D']
-    n_cards_per_suit = 13
 
-    def __init__(self, privateCards, name):
+    def __init__(self, privateCards, name, suits=['S', 'H', 'C', 'D'], n_cards_per_suit=13):
         self.name = name
         self.privateCards = privateCards
 
+        self.suits = suits
+        self.n_cards_per_suit = n_cards_per_suit
+
         self.ledger = pd.DataFrame(columns=['Action', 'CounterParty', 'Contract', 'Price', 'Quantity', 'Buy/Sell'] + \
-                                           suits + ['Cash'])
+                                           self.suits + ['Cash'])
         self.inventories = {'S': 0, 'H': 0, 'C': 0, 'D': 0}
         self.cash = 0
 
@@ -25,7 +27,7 @@ class Player:
     def updateProbability(self, idx, revealedCards):
         # update private probability
         self.privateInformation.loc[idx] = calculateProbability( \
-            mergePrivateAndPublic(self.privateCards, revealedCards), n_cards_per_suit, suits)
+            mergePrivateAndPublic(self.privateCards, revealedCards), self.n_cards_per_suit, self.suits)
 
     def revealPrivateCard(self, cardToBeRevealed):
         if cardToBeRevealed in self.privateCards:
@@ -41,12 +43,12 @@ class Player:
         if contract == self.name:
             self.cash -= numContracts * bidAskPrice[1]
             entry = [tradeNum, counterParty.name, contract, -1 * bidAskPrice[1], numContracts, 'Buy'] + \
-                    [self.inventories[key] for key in suits] + \
+                    [self.inventories[key] for key in self.suits] + \
                     [self.cash]
         else:
             self.cash -= numContracts * bidAskPrice[0]
             entry = [tradeNum, counterParty.name, contract, -1 * bidAskPrice[0], numContracts, 'Buy'] + \
-                    [self.inventories[key] for key in suits] + \
+                    [self.inventories[key] for key in self.suits] + \
                     [self.cash]
         # update ledger
         self.ledger.loc[idx] = entry
@@ -57,20 +59,24 @@ class Player:
         if contract == self.name:
             self.cash += numContracts * bidAskPrice[0]
             entry = [tradeNum, counterParty.name, contract, bidAskPrice[0], numContracts, 'Sell'] + \
-                    [self.inventories[key] for key in suits] + \
+                    [self.inventories[key] for key in self.suits] + \
                     [self.cash]
         else:
             self.cash += numContracts * bidAskPrice[1]
             entry = [tradeNum, counterParty.name, contract, bidAskPrice[1], numContracts, 'Sell'] + \
-                    [self.inventories[key] for key in suits] + \
+                    [self.inventories[key] for key in self.suits] + \
                     [self.cash]
         # update ledger
         self.ledger.loc[idx] = entry
 
+    def viz(self):
+        self.privateInformation.plot(marker='x', figsize=(20, 10))
+
+
 
 class MarketMaker(Player):
-    def __init__(self, privateCards, name):
-        super().__init__(privateCards, name)
+    def __init__(self, privateCards, name, suits, n_cards_per_suit):
+        super().__init__(privateCards, name, suits, n_cards_per_suit)
 
     def arbitrageAlert(self, counterPartyName, bidAskPrice):
 
