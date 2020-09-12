@@ -67,3 +67,26 @@ class Player:
         # update ledger
         self.ledger.loc[idx] = entry
 
+
+class MarketMaker(Player):
+    def __init__(self, privateCards, name):
+        super().__init__(privateCards, name)
+
+    def arbitrageAlert(self, counterPartyName, bidAskPrice):
+
+        temp = self.ledger.query('CounterParty == "{}"'.format(counterPartyName))[['Price', 'Buy/Sell']]
+
+        historicalAsks = temp['Price'][temp['Buy/Sell'] == 'Buy'].abs()
+        historicalBids = temp['Price'][temp['Buy/Sell'] == 'Sell'].abs()
+
+        # initiate conditions either one is True then arbitrage opportunity
+        cond1 = False
+        cond2 = False
+        if len(historicalBids) > 0 and bidAskPrice[1] > historicalBids.values.min():
+            cond2 = True
+            print('Ask Price too high. Suggested Ask price {}'.format(historicalBids.values.min() - 1))
+        if len(historicalAsks) > 0 and bidAskPrice[0] < historicalAsks.values.max():
+            cond1 = True
+            print('Bid Price too low. Suggested Bid price {}'.format(historicalAsks.values.max() + 1))
+
+        return cond1 and cond2
