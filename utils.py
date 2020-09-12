@@ -42,6 +42,7 @@ def calculateProbability(cardsExcluded, n_cards_per_suit, suits):
     # convert to prob
     return [round(d[key] / n_cards_per_suit, 3) for key in suits]
 
+
 def executeTrade(seller, buyer, bidAskPrice, contract, numContracts, idx, action, trade):
     seller.sell(buyer, bidAskPrice, contract, numContracts, idx, action, trade)
     buyer.buy(seller, bidAskPrice, contract, numContracts, idx, action, trade)
